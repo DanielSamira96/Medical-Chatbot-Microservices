@@ -1,0 +1,1 @@
+"""Frontend module for the medical chatbot Streamlit application."""

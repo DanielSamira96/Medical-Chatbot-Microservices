@@ -1,0 +1,1 @@
+"""Configuration module for the medical chatbot system."""
