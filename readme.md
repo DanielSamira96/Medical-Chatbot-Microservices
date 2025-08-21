@@ -143,7 +143,7 @@ Each final context file contains all medical services formatted specifically for
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/DanielSamira96/Medical-Chatbot-Microservices.git
    cd Medical-Chatbot-Microservices
    ```
 
