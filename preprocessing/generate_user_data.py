@@ -10,7 +10,7 @@ import json
 import glob
 
 
-def load_all_json_files(jsons_folder="jsons"):
+def load_all_json_files(jsons_folder="preprocessing/jsons"):
     """Load all JSON files from the jsons folder"""
     json_files = glob.glob(os.path.join(jsons_folder, "*.json"))
     all_data = {}
@@ -101,7 +101,7 @@ def generate_user_specific_text(all_data, hmo, tier, output_dir):
 def create_all_user_files():
     """Generate all user-specific data files for all HMO and tier combinations"""
     # Define paths
-    jsons_folder = "jsons"
+    jsons_folder = "preprocessing/jsons"
     output_folder = "user_specific_data"
     
     # Create output directory if it doesn't exist

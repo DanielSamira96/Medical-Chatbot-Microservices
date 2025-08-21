@@ -43,7 +43,7 @@ def run_complete_preprocessing():
         print("=" * 60)
         print("PREPROCESSING COMPLETE!")
         print("=" * 60)
-        print(f"JSON files: {len(json_files)} files in 'jsons/' directory")
+        print(f"JSON files: {len(json_files)} files in 'preprocessing/jsons/' directory")
         print(f"User files: {len(user_files)} files in 'user_specific_data/' directory")
         
         return {

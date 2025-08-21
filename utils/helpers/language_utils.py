@@ -3,7 +3,6 @@ Simple language detection and multilingual error messages.
 """
 
 import re
-from typing import List, Optional
 from config.settings import settings
 
 def detect_language_from_text(text: str) -> str:
@@ -33,7 +32,7 @@ def detect_language_from_text(text: str) -> str:
         return settings.DEFAULT_LANGUAGE
     
     # Determine detected language
-    detected = 'hebrew' if hebrew_chars > english_chars else 'english'
+    detected = 'he' if hebrew_chars > english_chars else 'en'
     
     # IMPORTANT: Validate against supported languages
     if detected in settings.SUPPORTED_LANGUAGES:
@@ -42,49 +41,39 @@ def detect_language_from_text(text: str) -> str:
         return settings.DEFAULT_LANGUAGE  # Fallback to default for unsupported languages
 
 
-class ErrorMessages:
-    """Multilingual error messages."""
-    
-    PROCESSING_ERROR = {
-        'hebrew': 'שגיאה בעיבוד הנתונים. אנא בדוק את הפרטים ונסה שוב.',
-        'english': 'Error processing data. Please check the details and try again.'
+ERROR_MESSAGES = {
+    "processing_error": {
+        'he': 'שגיאה בעיבוד הנתונים. אנא בדוק את הפרטים ונסה שוב.',
+        'en': 'Error processing data. Please check the details and try again.'
+    },
+    "server_error": {
+        'he': 'שגיאה בשרת. אנא נסה שוב מאוחר יותר.',
+        'en': 'Server error. Please try again later.'
+    },
+    "azure_connection_error": {
+        'he': 'שגיאה בחיבור לשירות. אנא נסה שוב.',
+        'en': 'Service connection error. Please try again.'
+    },
+    "invalid_user_info": {
+        'he': 'הנתונים שסופקו אינם תקינים. אנא בדוק ונסה שוב.',
+        'en': 'The provided information is invalid. Please check and try again.'
+    },
+    "context_load_error": {
+        'he': 'שגיאה בטעינת נתוני השירותים הרפואיים.',
+        'en': 'Error loading medical services data.'
     }
-    
-    SERVER_ERROR = {
-        'hebrew': 'שגיאה בשרת. אנא נסה שוב מאוחר יותר.',
-        'english': 'Server error. Please try again later.'
-    }
-    
-    AZURE_CONNECTION_ERROR = {
-        'hebrew': 'שגיאה בחיבור לשירות. אנא נסה שוב.',
-        'english': 'Service connection error. Please try again.'
-    }
-    
-    INVALID_USER_INFO = {
-        'hebrew': 'הנתונים שסופקו אינם תקינים. אנא בדוק ונסה שוב.',
-        'english': 'The provided information is invalid. Please check and try again.'
-    }
-    
-    CONTEXT_LOAD_ERROR = {
-        'hebrew': 'שגיאה בטעינת נתוני השירותים הרפואיים.',
-        'english': 'Error loading medical services data.'
-    }
-    
-    @classmethod
-    def get(cls, message_type: str, language: str) -> str:
-        """
-        Get error message in specified language.
-        
-        Args:
-            message_type: Error message type (e.g., 'PROCESSING_ERROR')
-            language: Language code
-            
-        Returns:
-            Error message in requested language
-        """
-        
-        message_dict = getattr(cls, message_type, cls.SERVER_ERROR)
-        return message_dict.get(language, message_dict.get('hebrew', 'Unknown error'))
+}
 
-# Global instance
-error_messages = ErrorMessages()
+def get_error_message(message_type: str, language: str) -> str:
+    """
+    Get error message in specified language.
+    
+    Args:
+        message_type: Error message type (e.g., 'processing_error')
+        language: Language code
+        
+    Returns:
+        Error message in requested language
+    """
+    message_dict = ERROR_MESSAGES.get(message_type, ERROR_MESSAGES["server_error"])
+    return message_dict.get(language, message_dict.get('he', 'Unknown error'))

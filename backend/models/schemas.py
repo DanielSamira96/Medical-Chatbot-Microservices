@@ -12,9 +12,9 @@ class UserInfo(BaseModel):
     id_number: str = Field(..., min_length=9, max_length=9)
     gender: str = Field(..., min_length=1)
     age: int = Field(..., ge=0, le=120)
-    hmo_name: str = Field(..., regex="^(מכבי|מאוחדת|כללית)$")
+    hmo_name: str = Field(..., pattern="^(מכבי|מאוחדת|כללית)$")
     hmo_card_number: str = Field(..., min_length=9, max_length=9)
-    membership_tier: str = Field(..., regex="^(זהב|כסף|ארד)$")
+    membership_tier: str = Field(..., pattern="^(זהב|כסף|ארד)$")
     
     @validator('id_number', 'hmo_card_number')
     def validate_numeric_string(cls, v):
@@ -25,7 +25,7 @@ class UserInfo(BaseModel):
 
 class ChatMessage(BaseModel):
     """Individual chat message schema."""
-    role: str = Field(..., regex="^(user|assistant|system)$")
+    role: str = Field(..., pattern="^(user|assistant|system)$")
     content: str = Field(..., min_length=1)
     timestamp: Optional[str] = None
 
@@ -34,10 +34,11 @@ class UserInfoCollectionRequest(BaseModel):
     message: str = Field(..., min_length=1)
     conversation_history: List[ChatMessage] = Field(default_factory=list)
     collected_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    ui_language: str = Field(default="he")  # User's UI preference
 
 class UserInfoCollectionResponse(BaseModel):
     """Response schema for user information collection phase."""
-    status: str = Field(..., regex="^(collecting|completed|error)$")
+    status: str = Field(..., pattern="^(collecting|completed|error)$")
     response: str
     collected_fields: Optional[List[str]] = None
     missing_fields: Optional[List[str]] = None
@@ -49,10 +50,11 @@ class MedicalQARequest(BaseModel):
     message: str = Field(..., min_length=1)
     user_info: UserInfo
     conversation_history: List[ChatMessage] = Field(default_factory=list)
+    ui_language: str = Field(default="he")  # User's UI preference
 
 class MedicalQAResponse(BaseModel):
     """Response schema for medical Q&A phase."""
-    status: str = Field(..., regex="^(success|error)$")
+    status: str = Field(..., pattern="^(success|error)$")
     response: str
     conversation_history: List[ChatMessage]
 

@@ -12,7 +12,8 @@ from backend.models.schemas import (
 )
 from backend.services import azure_openai_service
 from config.prompts.medical_qa import build_medical_qa_prompt
-from utils.helpers import detect_language_from_text, error_messages, load_user_medical_context
+from utils.helpers import detect_language_from_text, get_error_message, load_user_medical_context
+from utils.logging import log_user_action, log_error
 from config.settings import settings
 
 router = APIRouter()
@@ -30,6 +31,17 @@ async def medical_question_answer(request: MedicalQARequest):
         # Detect user language for error messages
         user_language = detect_language_from_text(request.message)
         
+        # Log medical Q&A interaction
+        log_user_action(
+            phase="medical_qa",
+            action="ask_question",
+            language=user_language,
+            user_hmo=request.user_info.hmo_name,
+            user_tier=request.user_info.membership_tier,
+            question_length=len(request.message),
+            conversation_length=len(request.conversation_history)
+        )
+        
         # Load user-specific medical context
         medical_context = load_user_medical_context(
             hmo_name=request.user_info.hmo_name,
@@ -38,9 +50,15 @@ async def medical_question_answer(request: MedicalQARequest):
         )
         
         if not medical_context:
+            log_error(
+                "Failed to load medical context", 
+                user_hmo=request.user_info.hmo_name,
+                user_tier=request.user_info.membership_tier,
+                language=user_language
+            )
             raise HTTPException(
                 status_code=400,
-                detail=error_messages.get("CONTEXT_LOAD_ERROR", user_language)
+                detail=get_error_message("context_load_error", user_language)
             )
         
         # Build the medical Q&A prompt with user context
@@ -60,7 +78,7 @@ async def medical_question_answer(request: MedicalQARequest):
         if not ai_response:
             raise HTTPException(
                 status_code=500, 
-                detail=error_messages.get("AZURE_CONNECTION_ERROR", user_language)
+                detail=get_error_message("azure_connection_error", user_language)
             )
         
         # Update conversation history
@@ -98,5 +116,5 @@ async def medical_question_answer(request: MedicalQARequest):
         
         raise HTTPException(
             status_code=500,
-            detail=error_messages.get("SERVER_ERROR", user_language)
+            detail=get_error_message("server_error", user_language)
         )

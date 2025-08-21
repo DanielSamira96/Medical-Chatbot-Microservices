@@ -4,6 +4,7 @@ Health check API endpoints.
 
 from datetime import datetime
 from fastapi import APIRouter
+from fastapi.responses import Response
 from backend.models.schemas import HealthCheckResponse
 from config.settings import settings
 from utils.helpers import get_available_contexts
@@ -23,7 +24,8 @@ async def health_check():
     
     try:
         # Check Azure OpenAI configuration
-        azure_configured = settings.validate_azure_config()
+        config_result = settings.validate_azure_config()
+        azure_configured = config_result['valid']
         
         # Get available user contexts
         available_contexts = get_available_contexts(settings.DATA_FOLDER)
@@ -44,3 +46,8 @@ async def health_check():
             azure_openai_configured=False,
             available_contexts=[]
         )
+
+@router.get("/favicon.ico")
+async def favicon():
+    """Handle favicon requests."""
+    return Response(status_code=204)  # No Content

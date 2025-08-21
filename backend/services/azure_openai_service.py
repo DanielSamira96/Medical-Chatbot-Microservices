@@ -7,6 +7,7 @@ Service layer for Azure OpenAI API interactions.
 import json
 from typing import List, Dict, Any, Optional
 from openai import AzureOpenAI
+from utils.logging import logger
 from config.settings import settings
 from backend.models.schemas import ChatMessage
 
@@ -14,19 +15,27 @@ class AzureOpenAIService:
     """Service for Azure OpenAI API interactions."""
     
     def __init__(self):
-        """Initialize Azure OpenAI client."""
-        self.client = AzureOpenAI(
+        """Initialize Azure OpenAI clients for both endpoints."""
+        self.gpt4o_client = AzureOpenAI(
             azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
             api_key=settings.AZURE_OPENAI_API_KEY,
             api_version=settings.AZURE_OPENAI_API_VERSION
         )
         
+        # GPT-4o-mini client (for User Info Collection)
+        self.gpt4o_mini_client = AzureOpenAI(
+            azure_endpoint=settings.AZURE_OPENAI_MINI_ENDPOINT,
+            api_key=settings.AZURE_OPENAI_MINI_API_KEY,
+            api_version=settings.AZURE_OPENAI_MINI_API_VERSION
+        )
+
     async def chat_completion(
         self, 
         messages: List[Dict[str, str]], 
         model_deployment: str,
         temperature: float,
-        max_tokens: int
+        max_tokens: int,
+        client: AzureOpenAI
     ) -> Optional[str]:
         """
         Get chat completion from Azure OpenAI.
@@ -42,17 +51,23 @@ class AzureOpenAIService:
         """
         
         try:
-            response = self.client.chat.completions.create(
+            response = client.chat.completions.create(
                 model=model_deployment,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            
+
             if response.choices and len(response.choices) > 0:
-                return response.choices[0].message.content
+                content = response.choices[0].message.content
+                
+                if not content:
+                    logger.error("Azure OpenAI returned empty response", deployment=model_deployment)
+                    return None
+                    
+                return content
             else:
-                print("No response choices returned from Azure OpenAI")
+                logger.error("No response choices returned from Azure OpenAI")
                 return None
                 
         except Exception as e:
@@ -76,7 +91,6 @@ class AzureOpenAIService:
         Returns:
             Assistant response or None if error
         """
-        
         # Build messages list
         messages = [{"role": "system", "content": system_prompt}]
         
@@ -89,10 +103,11 @@ class AzureOpenAIService:
         
         # Use GPT-4o Mini with configured parameters for user info collection
         return await self.chat_completion(
-            messages=messages,
-            model_deployment=settings.GPT_4O_MINI_DEPLOYMENT_NAME,
-            temperature=settings.USER_INFO_TEMPERATURE,
-            max_tokens=settings.USER_INFO_MAX_TOKENS
+            messages,
+            settings.GPT_4O_MINI_DEPLOYMENT_NAME,
+            settings.USER_INFO_TEMPERATURE,
+            settings.USER_INFO_MAX_TOKENS,
+            self.gpt4o_mini_client
         )
     
     async def medical_qa_chat(
@@ -125,10 +140,11 @@ class AzureOpenAIService:
         
         # Use GPT-4o with configured parameters for medical Q&A
         return await self.chat_completion(
-            messages=messages,
-            model_deployment=settings.GPT_4O_DEPLOYMENT_NAME,
-            temperature=settings.MEDICAL_QA_TEMPERATURE,
-            max_tokens=settings.MEDICAL_QA_MAX_TOKENS
+            messages,
+            settings.GPT_4O_DEPLOYMENT_NAME,
+            settings.MEDICAL_QA_TEMPERATURE,
+            settings.MEDICAL_QA_MAX_TOKENS,
+            self.gpt4o_client
         )
     
     def parse_user_info_response(self, response: str) -> Dict[str, Any]:

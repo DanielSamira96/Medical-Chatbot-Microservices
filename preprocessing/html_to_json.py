@@ -174,7 +174,7 @@ def process_all_html_files():
     """Process all HTML files and convert them to JSON format"""
     # Define paths
     html_folder = "phase2_data"
-    output_folder = "jsons"
+    output_folder = "preprocessing/jsons"
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_folder):
